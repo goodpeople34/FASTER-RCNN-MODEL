@@ -6,9 +6,9 @@ TRAIN_FILE_PATH = 'train_id.txt'
 TEST_FILE_PATH = 'test_id.txt'
 
 
-ANNOT_DIR = '/home/moel/dataset labeled/LabeledVoc'
-IMAGE_DIR = '/home/moel/dataset labeled/LabeledJpg'
-TRAIN_TXT = '/home/moel/coding/FasterRCNN/train_id.txt'
+ANNOT_DIR = 'ANNOTATION FOLDER DIRECTORY'
+IMAGE_DIR = 'IMAGE FOLDER DIRECTORY'
+TRAIN_TXT = 'TRAIN.TXT FILE LOCATION'
 CLASSES = ['background','bubble_text']
 NUM_CLASSES = 2
 
