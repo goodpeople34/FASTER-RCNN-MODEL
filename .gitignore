@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
-.ipynb_checkpoints
-.vscode
+*.ipynb_checkpoints
+*.vscode
 *.jpg
+*.png
+*.pth
