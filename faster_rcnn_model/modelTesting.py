@@ -48,7 +48,7 @@ for idx in range(2):
     # image_path = os.path.join(IMAGE_DIR, image_name)
     # print("image path :", image_path)
 
-    image_path = "path to image to be test"
+    image_path = "/home/moel/dataset labeled/LabeledJpg/76.jpg"
     print("image path :", image_path)
 
     # image_pil= Image.open(image_path)

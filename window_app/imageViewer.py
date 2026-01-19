@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainW
 from PySide6.QtGui import (QColorSpace, QGuiApplication, QImageReader, QImageWriter, QKeySequence, QPalette, QPainter, QPixmap)
 from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot
 
+from fileDialog import FileDialog
+
 
 ABOUT = """<p>The <b>Image Viewer</b> example shows how to combine QLabel
 and QScrollArea to display an image. QLabel is typically used
@@ -22,10 +24,38 @@ zooming and scaling features. </p><p>In addition the example
 shows how to use QPainter to print an image.</p>
 """
 
+MAX_SIZE = 800
 
-class ImageViewer(QMainWindow):
+
+class ImageViewer(QMainWindow, FileDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        
+        # self._scroll_area = QScrollArea()
+        # self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
+        # self._scroll_area.setWidgetResizable(True)  
+        # self.setCentralWidget(self._scroll_area)
+
+        # self._content = QWidget()
+        # self._layout = QHBoxLayout(self._content)
+        # self._scroll_area.setWidget(self._content)
+
+        # self._image_label = QLabel()
+        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
+        # self._image_label.setScaledContents(True)
+        # self._image_label.setSizePolicy(
+        #     QSizePolicy.Policy.Expanding,
+        #     QSizePolicy.Policy.Expanding
+        # )
+
+        # self._text_view = QPlainTextEdit(DUMMY)
+
+        # self._layout.addWidget(self._image_label, 1)
+        # self._layout.addWidget(self._text_view, 2)
+
+
+
+
         self._scale_factor = 1.0
         self._first_file_dialog = True
         self._image_label = QLabel()
@@ -54,7 +84,11 @@ class ImageViewer(QMainWindow):
             QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
                                     f"Cannot load {native_filename}: {error}")
             return False
-        self._set_image(new_image)
+
+        max_size = MAX_SIZE
+        resized_image = new_image.scaled(max_size,max_size, Qt.KeepAspectRatio,Qt.SmoothTransformation)
+
+        self._set_image(resized_image)
         self.setWindowFilePath(fileName)
 
         w = self._image.width()
@@ -94,21 +128,6 @@ class ImageViewer(QMainWindow):
             return False
         self.statusBar().showMessage(f'Wrote "{native_filename}"')
         return True
-
-    @Slot()
-    def _open(self):
-        dialog = QFileDialog(self, "Open File")
-        self._initialize_image_filedialog(dialog, QFileDialog.AcceptMode.AcceptOpen)
-        while (dialog.exec() == QDialog.DialogCode.Accepted and not self.load_file(dialog.selectedFiles()[0])):
-            pass
-
-    @Slot()
-    def _save_as(self):
-        dialog = QFileDialog(self, "Save File As")
-        self._initialize_image_filedialog(dialog, QFileDialog.AcceptMode.AcceptSave)
-        while (dialog.exec() == QDialog.DialogCode.Accepted
-                and not self._save_file(dialog.selectedFiles()[0])):
-            pass
 
     @Slot()
     def _print_(self):
@@ -175,7 +194,7 @@ class ImageViewer(QMainWindow):
         self._open_act.setShortcut(QKeySequence.StandardKey.Open)
 
         self._save_as_act = file_menu.addAction("&Save As...")
-        self._save_as_act.triggered.connect(self._save_as)
+        self._save_as_act.triggered.connect(self._saveFileAs)
         self._save_as_act.setEnabled(False)
 
         self._print_act = file_menu.addAction("&Print...")
@@ -256,19 +275,3 @@ class ImageViewer(QMainWindow):
         pos = int(factor * scrollBar.value()
                   + ((factor - 1) * scrollBar.pageStep() / 2))
         scrollBar.setValue(pos)
-
-    def _initialize_image_filedialog(self, dialog, acceptMode):
-        if self._first_file_dialog:
-            self._first_file_dialog = False
-            locations = QStandardPaths.standardLocations(QStandardPaths.StandardLocation.PicturesLocation)  # noqa: E501
-            directory = locations[-1] if locations else QDir.currentPath()
-            dialog.setDirectory(directory)
-
-        mime_types = [m.data().decode('utf-8') for m in QImageWriter.supportedMimeTypes()]
-        mime_types.sort()
-
-        dialog.setMimeTypeFilters(mime_types)
-        dialog.selectMimeTypeFilter("image/jpeg")
-        dialog.setAcceptMode(acceptMode)
-        if acceptMode == QFileDialog.AcceptMode.AcceptSave:
-            dialog.setDefaultSuffix("jpg")
