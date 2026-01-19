@@ -48,7 +48,7 @@ for idx in range(2):
     # image_path = os.path.join(IMAGE_DIR, image_name)
     # print("image path :", image_path)
 
-    image_path = "/home/moel/dataset labeled/LabeledJpg/76.jpg"
+    image_path = "path to the image to be test"
     print("image path :", image_path)
 
     # image_pil= Image.open(image_path)
@@ -122,10 +122,10 @@ for idx in range(2):
             ax[idx].add_patch(rect)
             ax[idx].text(
                 xmin + 8,
-                ymin - 16,
+                ymin - 20,
                 f"Class {label}",
                 color="red",
-                fontsize=12,
+                fontsize=5,
                 bbox=dict(facecolor="yellow", alpha=0.5, edgecolor="red"),
             )
 
