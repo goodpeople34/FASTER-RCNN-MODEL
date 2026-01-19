@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy)
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout)
 from PySide6.QtGui import (QColorSpace, QGuiApplication, QImageReader, QImageWriter, QKeySequence, QPalette, QPainter, QPixmap)
 from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot
 
@@ -24,6 +24,15 @@ zooming and scaling features. </p><p>In addition the example
 shows how to use QPainter to print an image.</p>
 """
 
+DUMMY = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
+sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+Ut enim ad minim veniam, quis nostrud exercitation ullamco
+laboris nisi ut aliquip ex ea commodo consequat. 
+Duis aute irure dolor in reprehenderit in voluptate
+velit esse cillum dolore eu fugiat nulla pariatur.
+Excepteur sint occaecat cupidatat non proident, 
+sunt in culpa qui officia deserunt mollit anim id est laborum"""
+
 MAX_SIZE = 800
 
 
@@ -31,44 +40,46 @@ class ImageViewer(QMainWindow, FileDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # self._scroll_area = QScrollArea()
-        # self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
-        # self._scroll_area.setWidgetResizable(True)  
-        # self.setCentralWidget(self._scroll_area)
+        self._scroll_area = QScrollArea()
+        self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
+        self._scroll_area.setWidgetResizable(True)  
+        self.setCentralWidget(self._scroll_area)
 
-        # self._content = QWidget()
-        # self._layout = QHBoxLayout(self._content)
-        # self._scroll_area.setWidget(self._content)
-
-        # self._image_label = QLabel()
-        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
-        # self._image_label.setScaledContents(True)
-        # self._image_label.setSizePolicy(
-        #     QSizePolicy.Policy.Expanding,
-        #     QSizePolicy.Policy.Expanding
-        # )
-
-        # self._text_view = QPlainTextEdit(DUMMY)
-
-        # self._layout.addWidget(self._image_label, 1)
-        # self._layout.addWidget(self._text_view, 2)
-
-
-
+        self._content = QWidget()
+        self._layout = QHBoxLayout(self._content)
+        self._scroll_area.setWidget(self._content)
 
         self._scale_factor = 1.0
         self._first_file_dialog = True
         self._image_label = QLabel()
         self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
-        self._image_label.setSizePolicy(QSizePolicy.Policy.Ignored,
-                                        QSizePolicy.Policy.Ignored)
         self._image_label.setScaledContents(True)
+        self._image_label.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
 
-        self._scroll_area = QScrollArea()
-        self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
-        self._scroll_area.setWidget(self._image_label)
-        self._scroll_area.setVisible(False)
-        self.setCentralWidget(self._scroll_area)
+        self._text_view = QPlainTextEdit(DUMMY)
+
+        self._layout.addWidget(self._image_label, 1)
+        self._layout.addWidget(self._text_view, 2)
+
+
+
+
+        # self._scale_factor = 1.0
+        # self._first_file_dialog = True
+        # self._image_label = QLabel()
+        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
+        # self._image_label.setSizePolicy(QSizePolicy.Policy.Ignored,
+        #                                 QSizePolicy.Policy.Ignored)
+        # self._image_label.setScaledContents(True)
+
+        # self._scroll_area = QScrollArea()
+        # self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
+        # self._scroll_area.setWidget(self._image_label)
+        # self._scroll_area.setVisible(False)
+        # self.setCentralWidget(self._scroll_area)
 
         self._create_actions()
 
