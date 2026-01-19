@@ -4,3 +4,5 @@ __pycache__/
 .vscode/
 *.jpg
 *.png
+faster_rcnn_model/__pycache__
+window_app/__pycache__
