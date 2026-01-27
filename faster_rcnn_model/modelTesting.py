@@ -7,9 +7,6 @@ import torchvision
 from PIL import Image
 from config import TEST_FILE_PATH, IMAGE_DIR
 from torchvision.transforms import transforms
-import io
-from PIL import Image
-from PIL.ImageQt import ImageQt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

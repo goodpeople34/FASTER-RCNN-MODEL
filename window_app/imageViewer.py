@@ -57,28 +57,12 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
 
         self._image_labels = []
         self._images = []
+        self._extracted_text = []
 
         self._text_view = QPlainTextEdit()
         self._Vlayout.addWidget(self._image_container)
         self._Hlayout.addLayout(self._Vlayout, 1)
         self._Hlayout.addWidget(self._text_view, 2)
-
-
-
-
-        # self._scale_factor = 1.0
-        # self._first_file_dialog = True
-        # self._image_label = QLabel()
-        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
-        # self._image_label.setSizePolicy(QSizePolicy.Policy.Ignored,
-        #                                 QSizePolicy.Policy.Ignored)
-        # self._image_label.setScaledContents(True)
-
-        # self._scroll_area = QScrollArea()
-        # self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
-        # self._scroll_area.setWidget(self._image_label)
-        # self._scroll_area.setVisible(False)
-        # self.setCentralWidget(self._scroll_area)
 
         self._create_actions()
 
@@ -90,18 +74,13 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
 
         if new_image.isNull():
             raise ValueError("Generated image is null.")
+            error = reader.errorString()
+            QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
+                                    f"Cannot load {native_filename}: {error}")
             
-
-        # reader = QImageReader(fileName)
-        # reader.setAutoTransform(True)
-        # new_image = reader.read()
-
+            return False
+            
         native_filename = QDir.toNativeSeparators(fileName)
-        # if new_image.isNull():
-        #     error = reader.errorString()
-        #     QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
-        #                             f"Cannot load {native_filename}: {error}")
-        #     return False
 
         max_size = MAX_SIZE
 
@@ -117,10 +96,9 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
         self._image_labels.append(label)
         self._images.append(new_image)
 
-        format_text = "\n".join(text)
-        self._text_view.setPlainText(format_text)
-
-        
+        for words in text:
+            self._extracted_text.append(" | ".join(map(str,words)))
+        self._text_view.setPlainText("\n".join(self._extracted_text))
 
         message = f'successfully detect {native_filename}'
         self.statusBar().showMessage(message)
@@ -302,3 +280,14 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
         pos = int(factor * scrollBar.value()
                   + ((factor - 1) * scrollBar.pageStep() / 2))
         scrollBar.setValue(pos)
+
+    def _clear_images(self):
+        for label in self._image_labels:
+            label.clear()
+            label.setParent(None)
+            label.deleteLater()
+        
+        self._image_labels.clear()
+        self._images.clear()
+        self._extracted_text.clear()
+        self._text_view.clear()

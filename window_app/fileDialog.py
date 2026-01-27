@@ -15,6 +15,7 @@ class FileDialog:
         )
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
+            self._clear_images()
             for path in dialog.selectedFiles():
                 if not self.load_file(path):
                     break
@@ -53,4 +54,6 @@ class FileDialog:
 
         dialog.setMimeTypeFilters(mime_types)
         dialog.selectMimeTypeFilter("image/jpeg")
+
+    
         

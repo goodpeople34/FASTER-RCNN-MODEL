@@ -47,6 +47,7 @@ class CallModel:
 
         for box,label, score in zip(boxes,labels, scores):
             if score >= 0.8:
+                self.words = []
                 xmin, ymin, xmax, ymax = box
                 width, height = xmax - xmin, ymax - ymin
                 rect = patches.Rectangle(
@@ -70,9 +71,10 @@ class CallModel:
                 xmin, ymin, xmax, ymax = map(int, box)
                 cropped_img = image_pil.crop((xmin, ymin, xmax, ymax))
                 self._tesseractModel(cropped_img)
+                self.extracted_text.append(self.words)
 
         buf = io.BytesIO()
-        fig.savefig(buf, format='png', bbox_inches='tight',pad_inches=0.1)
+        fig.savefig(buf, format='png', bbox_inches='tight',pad_inches=0)
         buf.seek(0)
 
         final_pil = Image.open(buf)
@@ -81,5 +83,6 @@ class CallModel:
         return qt_image, self.extracted_text
 
     def _tesseractModel(self, image_cropped):
-            extract_text = pytesseract.image_to_string(image_cropped)
-            self.extracted_text.append(extract_text)
+            custom_config = r'--oem 3 --psm 11'
+            extract_text = pytesseract.image_to_string(image_cropped, config=custom_config)
+            self.words.append(extract_text)
