@@ -7,6 +7,9 @@ import torchvision
 from PIL import Image
 from config import TEST_FILE_PATH, IMAGE_DIR
 from torchvision.transforms import transforms
+import io
+from PIL import Image
+from PIL.ImageQt import ImageQt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -20,8 +23,9 @@ model.load_state_dict(torch.load("model_epoch50.pth",map_location=torch.device('
 model.eval()
 model.to(device)
 
-fig, ax = plt.subplots(1,2,figsize=(10, 6))
-ax = ax.ravel()
+fig, ax = plt.subplots(1,1,figsize=(10, 6))
+# ax = ax.ravel()
+ax =[ax]
 
 transform = transforms.ToTensor()
 
@@ -40,7 +44,7 @@ if len(image_ids) == 0:
 
 print(f"Loaded {len(image_ids)} images from {os.path.basename(split_file)}")
 
-for idx in range(2):
+for idx in range(1):
 
 
     # image_id = random.choice(image_ids)
@@ -48,10 +52,11 @@ for idx in range(2):
     # image_path = os.path.join(IMAGE_DIR, image_name)
     # print("image path :", image_path)
 
-    image_path = "path to the image to be test"
+    image_id = "002"
+    image_path = "/home/moel/Pictures/manga/Boku no Kanojo wa Dekkawai/extracted/Chapter 3/002.jpg"
     print("image path :", image_path)
 
-    # image_pil= Image.open(image_path)
+    image_pil= Image.open(image_path)
     image = Image.open(image_path)
     image = transform(image)
     image_tensor = image.unsqueeze(0).to(device)
@@ -66,18 +71,16 @@ for idx in range(2):
     labels = prediction["labels"].cpu().numpy()
     scores = prediction["scores"].cpu().numpy()
 
-    ax[idx].imshow(image_np)
-
-    # crop_idx = 0
+    ax[idx].imshow(image_np,cmap='gray')
+    ax[idx].axis("off")
+    crop_idx = 0
 
     # for box, label, score in zip(boxes, labels, scores):
     #     if score >= 0.8:
     #         xmin, ymin, xmax, ymax = box
 
-    #         # Convert to int (VERY important)
     #         xmin, ymin, xmax, ymax = map(int, [xmin, ymin, xmax, ymax])
 
-    #         # Crop image
     #         cropped_img = image_pil.crop((xmin, ymin, xmax, ymax))
 
     #         # Optional: save cropped image
@@ -128,5 +131,14 @@ for idx in range(2):
                 fontsize=5,
                 bbox=dict(facecolor="yellow", alpha=0.5, edgecolor="red"),
             )
+            
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
 
-plt.show()
+    pil_img = Image.open(buf)
+
+    qt_img = ImageQt(pil_img)
+    # pil_img.show()
+
+pil_img.show()

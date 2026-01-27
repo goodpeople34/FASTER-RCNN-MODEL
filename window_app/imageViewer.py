@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout)
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout, QVBoxLayout)
 from PySide6.QtGui import (QColorSpace, QGuiApplication, QImageReader, QImageWriter, QKeySequence, QPalette, QPainter, QPixmap)
 from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot
 
 from fileDialog import FileDialog
+from tessearctOcr import CallModel
 
 
 ABOUT = """<p>The <b>Image Viewer</b> example shows how to combine QLabel
@@ -36,7 +37,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum"""
 MAX_SIZE = 800
 
 
-class ImageViewer(QMainWindow, FileDialog):
+class ImageViewer(QMainWindow, FileDialog, CallModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -46,23 +47,29 @@ class ImageViewer(QMainWindow, FileDialog):
         self.setCentralWidget(self._scroll_area)
 
         self._content = QWidget()
-        self._layout = QHBoxLayout(self._content)
+        self._image_container = QWidget()
+        self._Hlayout = QHBoxLayout(self._content)
+        self._Vlayout = QVBoxLayout()
         self._scroll_area.setWidget(self._content)
 
         self._scale_factor = 1.0
         self._first_file_dialog = True
-        self._image_label = QLabel()
-        self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
-        self._image_label.setScaledContents(True)
-        self._image_label.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
-        )
+
+        self._image_labels = []
+        self._images = []
+
+        # self._image_label = QLabel()
+        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
+        # self._image_label.setScaledContents(True)
+        # self._image_label.setSizePolicy(
+        #     QSizePolicy.Policy.Expanding,
+        #     QSizePolicy.Policy.Expanding
+        # )
 
         self._text_view = QPlainTextEdit(DUMMY)
-
-        self._layout.addWidget(self._image_label, 1)
-        self._layout.addWidget(self._text_view, 2)
+        self._Vlayout.addWidget(self._image_container)
+        self._Hlayout.addLayout(self._Vlayout, 1)
+        self._Hlayout.addWidget(self._text_view, 2)
 
 
 
@@ -86,29 +93,45 @@ class ImageViewer(QMainWindow, FileDialog):
         self.resize(QGuiApplication.primaryScreen().availableSize() * 3 / 5)
 
     def load_file(self, fileName):
-        reader = QImageReader(fileName)
-        reader.setAutoTransform(True)
-        new_image = reader.read()
-        native_filename = QDir.toNativeSeparators(fileName)
+
+        new_image = self._model(fileName)
+
         if new_image.isNull():
-            error = reader.errorString()
-            QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
-                                    f"Cannot load {native_filename}: {error}")
-            return False
+            raise ValueError("Generated image is null.")
+            
+
+        # reader = QImageReader(fileName)
+        # reader.setAutoTransform(True)
+        # new_image = reader.read()
+
+        native_filename = QDir.toNativeSeparators(fileName)
+        # if new_image.isNull():
+        #     error = reader.errorString()
+        #     QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
+        #                             f"Cannot load {native_filename}: {error}")
+        #     return False
 
         max_size = MAX_SIZE
-        resized_image = new_image.scaled(max_size,max_size, Qt.KeepAspectRatio,Qt.SmoothTransformation)
 
-        self._set_image(resized_image)
-        self.setWindowFilePath(fileName)
+        pixmap = QPixmap.fromImage(new_image)
 
-        w = self._image.width()
-        h = self._image.height()
-        d = self._image.depth()
-        color_space = self._image.colorSpace()
-        description = color_space.description() if color_space.isValid() else 'unknown'
-        message = f'Opened "{native_filename}", {w}x{h}, Depth: {d} ({description})'
+        resized_image = pixmap.scaled(max_size, max_size,Qt.KeepAspectRatio,Qt.SmoothTransformation)
+        label = QLabel()
+        label.setPixmap(resized_image)
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("padding: 8px; border-bottom: 1px solid #ccc;")
+
+        self._Vlayout.addWidget(label)
+        self._image_labels.append(label)
+        self._images.append(new_image)
+
+        # w, h, d = new_image.width(), new_image.height(), new_image.depth()
+        # color_space = new_image.colorSpace()
+        # description = color_space.description() if color_space.isValid() else "unknown"
+        # message = f'Opened "{native_filename}", {w}x{h}, Depth: {d} ({description})'
+        message = f'successfully detect {native_filename}'
         self.statusBar().showMessage(message)
+
         return True
 
     def _set_image(self, new_image):
