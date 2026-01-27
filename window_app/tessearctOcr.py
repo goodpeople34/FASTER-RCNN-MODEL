@@ -9,10 +9,9 @@ import matplotlib.patches as patches
 import io
 
 class CallModel:
-    def __init__(self):
-        self.crop_image = []
-
     def _model(self, _img_path):
+        self.extracted_text = []
+
         num_classes = 2
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
@@ -68,6 +67,10 @@ class CallModel:
                 bbox=dict(facecolor="yellow", alpha=0.5, edgecolor="red"),
                 )
 
+                xmin, ymin, xmax, ymax = map(int, box)
+                cropped_img = image_pil.crop((xmin, ymin, xmax, ymax))
+                self._tesseractModel(cropped_img)
+
         buf = io.BytesIO()
         fig.savefig(buf, format='png', bbox_inches='tight',pad_inches=0.1)
         buf.seek(0)
@@ -75,8 +78,8 @@ class CallModel:
         final_pil = Image.open(buf)
         qt_image = ImageQt(final_pil)
 
-        return qt_image
+        return qt_image, self.extracted_text
 
     def _tesseractModel(self, image_cropped):
-
-        return
+            extract_text = pytesseract.image_to_string(image_cropped)
+            self.extracted_text.append(extract_text)

@@ -25,14 +25,14 @@ zooming and scaling features. </p><p>In addition the example
 shows how to use QPainter to print an image.</p>
 """
 
-DUMMY = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-Ut enim ad minim veniam, quis nostrud exercitation ullamco
-laboris nisi ut aliquip ex ea commodo consequat. 
-Duis aute irure dolor in reprehenderit in voluptate
-velit esse cillum dolore eu fugiat nulla pariatur.
-Excepteur sint occaecat cupidatat non proident, 
-sunt in culpa qui officia deserunt mollit anim id est laborum"""
+# DUMMY = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
+# sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+# Ut enim ad minim veniam, quis nostrud exercitation ullamco
+# laboris nisi ut aliquip ex ea commodo consequat. 
+# Duis aute irure dolor in reprehenderit in voluptate
+# velit esse cillum dolore eu fugiat nulla pariatur.
+# Excepteur sint occaecat cupidatat non proident, 
+# sunt in culpa qui officia deserunt mollit anim id est laborum"""
 
 MAX_SIZE = 800
 
@@ -58,15 +58,7 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
         self._image_labels = []
         self._images = []
 
-        # self._image_label = QLabel()
-        # self._image_label.setBackgroundRole(QPalette.ColorRole.Base)
-        # self._image_label.setScaledContents(True)
-        # self._image_label.setSizePolicy(
-        #     QSizePolicy.Policy.Expanding,
-        #     QSizePolicy.Policy.Expanding
-        # )
-
-        self._text_view = QPlainTextEdit(DUMMY)
+        self._text_view = QPlainTextEdit()
         self._Vlayout.addWidget(self._image_container)
         self._Hlayout.addLayout(self._Vlayout, 1)
         self._Hlayout.addWidget(self._text_view, 2)
@@ -94,7 +86,7 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
 
     def load_file(self, fileName):
 
-        new_image = self._model(fileName)
+        new_image, text = self._model(fileName)
 
         if new_image.isNull():
             raise ValueError("Generated image is null.")
@@ -125,10 +117,11 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
         self._image_labels.append(label)
         self._images.append(new_image)
 
-        # w, h, d = new_image.width(), new_image.height(), new_image.depth()
-        # color_space = new_image.colorSpace()
-        # description = color_space.description() if color_space.isValid() else "unknown"
-        # message = f'Opened "{native_filename}", {w}x{h}, Depth: {d} ({description})'
+        format_text = "\n".join(text)
+        self._text_view.setPlainText(format_text)
+
+        
+
         message = f'successfully detect {native_filename}'
         self.statusBar().showMessage(message)
 
