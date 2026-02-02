@@ -21,7 +21,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     image_viewer = ImageViewer()
 
-    if args.file and not image_viewer.load_file(args.file):
+    if args.file and not image_viewer._image_viewer(args.file):
         sys.exit(-1)
 
     image_viewer.show()

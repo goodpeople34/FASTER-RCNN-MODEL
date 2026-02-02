@@ -4,9 +4,11 @@ from PIL.ImageQt import ImageQt
 import torch
 import torchvision
 from torchvision.transforms import transforms
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import io
+import re
 
 class CallModel:
     def _model(self, _img_path):
@@ -21,6 +23,8 @@ class CallModel:
         model.load_state_dict(torch.load("second_model.pth",map_location=torch.device('cpu')))
         model.eval()
         model.to(device)
+
+        matplotlib.use('agg')
 
         fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -83,6 +87,15 @@ class CallModel:
         return qt_image, self.extracted_text
 
     def _tesseractModel(self, image_cropped):
-            custom_config = r'--oem 3 --psm 11'
+            custom_config = r'--oem 3 --psm 6'
             extract_text = pytesseract.image_to_string(image_cropped, config=custom_config)
-            self.words.append(extract_text)
+            clean_text = extract_text.strip() 
+            
+            clean_text = "".join([c if ord(c) < 128 else "" for c in clean_text])
+            
+            clean_text = re.sub(r'\n+', '\n', clean_text)
+            clean_text = re.sub(r' +', ' ', clean_text)
+            
+
+            if clean_text:
+                self.words.append(clean_text)

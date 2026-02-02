@@ -95,7 +95,7 @@ class FileDialog:
         self.status_label.setText("All files loaded")
     
     def _on_error(self, msg):
-        QMessageBox.critical(self, "OCR Error", msg)
+        QMessageBox.critical(self, "image load error", msg)
 
 
 

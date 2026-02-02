@@ -80,9 +80,9 @@ class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
             self._images.append(new_image)
 
             for words in text:
-                self._extracted_text.append("".join(map(str, words)))
+                self._extracted_text.append(" ".join(map(str, words)))
 
-        self._text_view.setPlainText("\n".join(self._extracted_text))
+        self._text_view.setPlainText("\n-------------------------\n".join(self._extracted_text))
         self.statusBar().showMessage(f"Loaded {len(results)} files")
 
 
