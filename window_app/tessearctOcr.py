@@ -18,7 +18,7 @@ class CallModel:
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
 
-        model.load_state_dict(torch.load("model_epoch50.pth",map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load("second_model.pth",map_location=torch.device('cpu')))
         model.eval()
         model.to(device)
 
@@ -29,7 +29,7 @@ class CallModel:
         ax.clear()
 
         image_pil= Image.open(_img_path)
-        image = Image.open(_img_path)
+        image = Image.open(_img_path).convert("RGB")
         image = transform(image)
         image_tensor = image.unsqueeze(0).to(device)
 

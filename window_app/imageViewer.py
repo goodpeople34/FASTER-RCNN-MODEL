@@ -5,9 +5,9 @@ from __future__ import annotations
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout, QVBoxLayout)
 from PySide6.QtGui import (QColorSpace, QGuiApplication, QImageReader, QImageWriter, QKeySequence, QPalette, QPainter, QPixmap)
-from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot
+from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot, QObject, Signal
 
-from fileDialog import FileDialog
+from fileDialog import FileDialog, Worker
 from tessearctOcr import CallModel
 
 
@@ -28,7 +28,8 @@ shows how to use QPainter to print an image.</p>
 MAX_SIZE = 800
 
 
-class ImageViewer(QMainWindow, FileDialog, CallModel):
+
+class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -59,42 +60,31 @@ class ImageViewer(QMainWindow, FileDialog, CallModel):
 
         self.resize(QGuiApplication.primaryScreen().availableSize() * 3 / 5)
 
-    def load_file(self, fileName):
+    def _image_viewer(self, results):
 
-        new_image, text = self._model(fileName)
+        for new_image, text, fileName in results:
+            pixmap = QPixmap.fromImage(new_image)
+            resized = pixmap.scaled(
+                MAX_SIZE, MAX_SIZE,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
 
-        if new_image.isNull():
-            raise ValueError("Generated image is null.")
-            error = reader.errorString()
-            QMessageBox.information(self, QGuiApplication.applicationDisplayName(),
-                                    f"Cannot load {native_filename}: {error}")
-            
-            return False
-            
-        native_filename = QDir.toNativeSeparators(fileName)
+            label = QLabel()
+            label.setPixmap(resized)
+            label.setAlignment(Qt.AlignCenter)
+            label.setStyleSheet("padding: 8px; border-bottom: 1px solid #ccc;")
 
-        max_size = MAX_SIZE
+            self._Vlayout.addWidget(label)
+            self._image_labels.append(label)
+            self._images.append(new_image)
 
-        pixmap = QPixmap.fromImage(new_image)
+            for words in text:
+                self._extracted_text.append("".join(map(str, words)))
 
-        resized_image = pixmap.scaled(max_size, max_size,Qt.KeepAspectRatio,Qt.SmoothTransformation)
-        label = QLabel()
-        label.setPixmap(resized_image)
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet("padding: 8px; border-bottom: 1px solid #ccc;")
-
-        self._Vlayout.addWidget(label)
-        self._image_labels.append(label)
-        self._images.append(new_image)
-
-        for words in text:
-            self._extracted_text.append(" | ".join(map(str,words)))
         self._text_view.setPlainText("\n".join(self._extracted_text))
+        self.statusBar().showMessage(f"Loaded {len(results)} files")
 
-        message = f'successfully detect {native_filename}'
-        self.statusBar().showMessage(message)
-
-        return True
 
     def _set_image(self, new_image):
         self._image = new_image
