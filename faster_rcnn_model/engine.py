@@ -51,13 +51,21 @@ class MLModel:
 
                 model.train()
                 train_running_loss = 0
+                rpn_cls_loss = 0.0
+                rpn_box_loss = 0.0
                 print(f'epoch {epoch}/{num_epochs} training')
 
-                for images, targets in train_data_loader:
+                for images, targets in self.train_data_loader:
                     images = list(image.to(device) for image in images)
                     targets = [{k:v.to(device) for k, v in t.items()} for t in targets]
 
                     loss_dict = model(images, targets)
+
+                    loss_objectness = loss_dict["loss_objectness"]      
+                    loss_rpn_box = loss_dict["loss_rpn_box_reg"]         
+
+                    rpn_cls_loss += loss_objectness.item()
+                    rpn_box_loss += loss_rpn_box.item()
 
                     losses = sum(loss for loss in loss_dict.values())
 
@@ -68,8 +76,21 @@ class MLModel:
                     train_running_loss += losses.item()
                 
                 lr_scheduler.step()
+
+                avg_total_loss = train_running_loss / num_batches
+                avg_rpn_cls = rpn_cls_loss / num_batches
+                avg_rpn_box = rpn_box_loss / num_batches
+
+                print(
+                    f"Total loss: {avg_total_loss:.4f} | "
+                    f"RPN cls: {avg_rpn_cls:.4f} | "
+                    f"RPN bbox: {avg_rpn_box:.4f}"
+                )
+
                 train_loss.append(train_running_loss)
-                print(f"train loss : {train_running_loss/len(self.train_dataset):.4f}")
+
+                num_batches = len(self.train_data_loader)
+                print(f"train loss : {train_running_loss/num_batches:.4f}")
                 print('\n')
 
                 if (epoch+1) % SAVE_MODEL_EPOCHS == 0:
