@@ -1,145 +1,84 @@
 import torch
 import torchvision
+from torch.utils.data import DataLoader
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from tqdm import tqdm
-import numpy as np
 
+from dataset import test_ds
+from dataVisual import manga_collate_fn
+from config import NUM_CLASSES, WIDTH, HEIGHT, CLASSES
 
-def _iou_evluation(boxA, boxB):
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = max(boxA[2], boxB[2])
-    yB = max(boxA[3], boxB[3])
-
-    intersec_area = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-
-    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
-    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
-
-    union_area = float(boxAArea + boxBArea - intersec_area)
-
-
-    iou = intersec_area / union_area
-
-    return iou
-
-
-def iou_matrix(pred_boxes, gt_boxes):
-    ious = torch.zeros((len(pred_boxes), len(gt_boxes)))
-
-    for i, p in enumerate(pred_boxes):
-        for j, g in enumerate(gt_boxes):
-            ious[i, j] = box_iou(p, g)
-
-    return ious
-
-
-def _average_precission(recalls, precissions):
-
-    recalls = np.concatenate(([0.0], recalls, [1.0]))
-    precisions = np.concatenate(([0.0], precisions, [0.0]))
-
-    for i in range(len(precisions) - 1, 0, -1):
-        precisions[i - 1] = max(precisions[i - 1], precisions[i])
-
-
-    indices = np.where(recalls[1:] != recalls[:-1])[0]
-    ap = np.sum(
-        (recalls[indices + 1] - recalls[indices]) * precisions[indices + 1]
-    )
-
-    return ap
-
-
-def _mean_average_precission(pred_boxes,pred_scores, gt_boxes, iou_threshold):
-    indices = np.argsort(-np.array(pred_scores))
-    pred_boxes = [pred_boxes[i] for i in indices]
-
-    matched_gt = [False] * len(gt_boxes)
-
-    tp = np.zeros(len(pred_boxes))
-    fp = np.zeros(len(pred_boxes))
-
-    for i, pred in enumerate(pred_boxes):
-        best_iou = 0
-        best_gt = -1
-
-        for j, gt in enumerate(gt_boxes):
-            iou = box_iou(pred, gt)
-            if iou > best_iou:
-                best_iou = iou
-                best_gt = j
-                
-                
-        if best_iou >= iou_threshold and not matched_gt[best_gt]:
-            tp[i] = 1
-            matched_gt[best_gt] = True
-        else:
-            fp[i] = 1
-
-
-
-
-    tp_cum = np.cumsum(tp)
-    fp_cum = np.cumsum(fp)
-
-    recalls = tp_cum / max(len(gt_boxes), 1)
-    precisions = tp_cum / (tp_cum + fp_cum + 1e-6)
-
-    ap = average_precision(recalls, precisions)
-
-    return ap
-
-
+num_classes = NUM_CLASSES
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model.load_state_dict(
-    torch.load("model_epoch50.pth", map_location=device)
+model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+
+in_features = model.roi_heads.box_predictor.cls_score.in_features
+model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(
+    in_features, num_classes
 )
-model.to(device)
+
+model.load_state_dict(torch.load("model_epoch_40_512x512_2nd.pth", map_location=device))
 model.eval()
+model.to(device)
 
+metric = MeanAveragePrecision(
+    iou_type="bbox",
+    box_format="xyxy",
+    class_metrics=True
+).to(device)
 
-def _evaluate_model(model, data_loader, iou_threshold=0.5):
-    aps = []
-    ious = []
+test_loader = DataLoader(
+    test_ds,
+    batch_size=2,
+    shuffle=False,
+    collate_fn=manga_collate_fn,
+    num_workers=0
+)
 
-    
-    for images, targets in tqdm(data_loader):
-        images = [img.to(device) for img in images]
+print("Starting evaluation...")
+with torch.no_grad():
+    for images, targets in tqdm(test_loader, desc="Evaluating"):
+        images = [img.to(device) for img in images]          # Important: list of tensors
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-    outputs = model(images)
+        outputs = model(images)
 
+        # Convert outputs to CPU for torchmetrics (recommended)
+        outputs = [{k: v.cpu() for k, v in out.items()} for out in outputs]
+        targets = [{k: v.cpu() for k, v in t.items()} for t in targets]
 
-    for output, target in zip(outputs, targets):
-            pred_boxes = output["boxes"].cpu().numpy()
-            pred_scores = output["scores"].cpu().numpy()
-            gt_boxes = target["boxes"].cpu().numpy()
+        metric.update(outputs, targets)
 
+results = metric.compute()
 
-            for gt in gt_boxes:
-                if len(pred_boxes) == 0:
-                    ious.append(0.0)
-                    continue
+print("\n" + "="*80)
+print("                  mAP EVALUATION RESULTS")
+print("="*80)
+print(f"Image Size          : {WIDTH} x {HEIGHT}")
+print(f"mAP (0.50:0.95)     : {results['map']:.4f}")
+print(f"mAP @ 0.50          : {results['map_50']:.4f}")
+print(f"mAP @ 0.75          : {results['map_75']:.4f}")
+print("-" * 80)
 
-                best_iou = max(
-                    box_iou(pred, gt) for pred in pred_boxes
-                )
-                ious.append(best_iou)
+print("Per-class Average Precision:")
+foreground_classes = CLASSES[1:] if len(CLASSES) > 1 else ['bubble_text', 'square_text', 'sparky_text']
 
-                
-            if len(gt_boxes) > 0 and len(pred_boxes) > 0:
-                ap = _mean_average_precission(
-                    pred_boxes,
-                    pred_scores,
-                    gt_boxes,
-                    iou_threshold=iou_threshold
-                )
-                aps.append(ap)
+map_per_class = results.get('map_per_class', [])
 
+for i, ap in enumerate(map_per_class):
+    if i < len(foreground_classes):
+        name = foreground_classes[i]
+        gt_info = " (no GT in test set)" if ap == 0 else ""
+        print(f" {name:18} : {ap:.4f}{gt_info}")
+    else:
+        print(f" Class_{i+1:2d}        : {ap:.4f}")
 
-    mean_iou = float(np.mean(ious)) if ious else 0.0
-    mean_ap = float(np.mean(aps)) if aps else 0.0
+print("-" * 80)
+print(f"Total test images   : {len(test_ds)}")
+print("="*80)
 
-    return mean_iou, mean_ap
-
+print("\nAdditional Metrics:")
+print(f"mAP small           : {results.get('map_small', 'N/A')}")
+print(f"mAP medium          : {results.get('map_medium', 'N/A')}")
+print(f"mAP large           : {results.get('map_large', 'N/A')}")

@@ -1,18 +1,41 @@
 import torchvision
 
-DATASET_ID = 128
-TRAIN_SIZE = 90
-TRAIN_FILE_PATH = 'train_id.txt'
-TEST_FILE_PATH = 'test_id.txt'
+# dataset configuration
+DATASET_ID = 407
+TRAIN_SIZE = 325
+# WIDTH AND HEIGHT PARAMETER
+# 512x512
+# 356x534
+# 460x460
 
+#invert image True or False
+INVERT = True
 
-ANNOT_DIR = 'ANNOTATION FOLDER DIRECTORY'
-IMAGE_DIR = 'IMAGE FOLDER DIRECTORY'
-TRAIN_TXT = 'TRAIN.TXT FILE LOCATION'
-CLASSES = ['background','bubble_text']
-NUM_CLASSES = 2
+# image resize configuration
+WIDTH = 460
+HEIGHT = 460
 
+# dataset for 2 classes of label
+# ANNOT_DIR = '/home/moel/dataset labeled1/LabeledVoc'
+# IMAGE_DIR = '/home/moel/dataset labeled1/LabeledJpg'
+# TRAIN_TXT = '/home/moel/coding/FasterRCNN1/train_id.txt'
+# CLASSES = ['background','bubble_text']
+# NUM_CLASSES = 2
+
+# dataset for 4 classes of label 
+ANNOT_DIR = '/home/moel/dataset labeled2/datasetVOC'
+IMAGE_DIR = '/home/moel/dataset labeled2/datasetJPG'
+TRAIN_TXT = '/home/moel/coding/FasterRCNN1/train_id.txt'
+TEST_TXT = '/home/moel/coding/FasterRCNN1/test_id.txt'
+CLASSES = ['background','bubble_text','square_text','sparky_text']
+NUM_CLASSES = 4
+
+# model backbone configuration
 MODEL = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
-NUM_EPOCHS = 10
+NUM_EPOCHS = 40
 
-SAVE_MODEL_EPOCHS = 2
+SAVE_MODEL_EPOCHS = 10
+
+
+
+
