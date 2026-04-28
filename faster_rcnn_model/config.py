@@ -37,8 +37,4 @@ NUM_EPOCHS = 40
 SAVE_MODEL_EPOCHS = 10
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 8337647 (New cleaner commit message)
 
