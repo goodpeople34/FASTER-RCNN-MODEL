@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtPrintSupport import QPrintDialog, QPrinter
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout, QVBoxLayout)
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QLabel,QMainWindow, QMessageBox, QScrollArea,QSizePolicy, QWidget,QPlainTextEdit, QHBoxLayout, QVBoxLayout, QStackedWidget, QPushButton, QProgressBar, QComboBox)
 from PySide6.QtGui import (QColorSpace, QGuiApplication, QImageReader, QImageWriter, QKeySequence, QPalette, QPainter, QPixmap)
 from PySide6.QtCore import QDir, QStandardPaths, Qt, Slot, QObject, Signal
 
@@ -32,14 +32,28 @@ MAX_SIZE = 800
 class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
+        self.CallModel = CallModel()
+        self._stack_widget = QStackedWidget()
+        self.setCentralWidget(self._stack_widget)
+
+        self._progress_bar = QProgressBar()
+
+        self._first_page = QWidget()
+        self._second_page = QWidget()
+        self._combo_box = QComboBox()
+        self._combo_box.addItems(["EasyOCR", "Tesseract OCR"])
+
+        self._first_button = QPushButton("choose image")
+        self._first_button.setObjectName("accentButton")
+
         self._scroll_area = QScrollArea()
         self._scroll_area.setBackgroundRole(QPalette.ColorRole.Dark)
-        self._scroll_area.setWidgetResizable(True)  
-        self.setCentralWidget(self._scroll_area)
+        self._scroll_area.setWidgetResizable(True)
 
         self._content = QWidget()
         self._image_container = QWidget()
+        self._image_container.setObjectName("imageContainer")
         self._Hlayout = QHBoxLayout(self._content)
         self._Vlayout = QVBoxLayout()
         self._scroll_area.setWidget(self._content)
@@ -52,13 +66,63 @@ class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
         self._extracted_text = []
 
         self._text_view = QPlainTextEdit()
+        self._text_view.setReadOnly(True)
         self._Vlayout.addWidget(self._image_container)
         self._Hlayout.addLayout(self._Vlayout, 1)
-        self._Hlayout.addWidget(self._text_view, 2)
+        self._Hlayout.addWidget(self._text_view, 1)
 
-        self._create_actions()
+        self._welcome_page()
+        self._image_page()
+
+
+        self._stack_widget.addWidget(self._first_page)
+        self._stack_widget.addWidget(self._second_page)
+
+        self._combo_box.currentIndexChanged.connect(CallModel.model_selection)
+        # self._first_page.setStyleSheet("background-color: gray;")    
 
         self.resize(QGuiApplication.primaryScreen().availableSize() * 3 / 5)
+
+    def _welcome_page(self):
+        layout = QVBoxLayout(self._first_page)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(20)
+
+        # Title
+        self._title = QLabel("Manga OCR Translator")
+        self._title.setObjectName("welcomeTitle")
+        self._title.setAlignment(Qt.AlignCenter)
+
+        # Image
+        image_label = QLabel()
+        image_label.setAlignment(Qt.AlignCenter)
+
+        pixmap = QPixmap("hina_2.jpg")  # change path to your image
+        pixmap = pixmap.scaled(240, 240, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        image_label.setPixmap(pixmap)
+
+        # Subtitle
+        self._subtitle = QLabel("Select an image to begin")
+        self._subtitle.setObjectName("welcomeSubtitle")
+        self._subtitle.setAlignment(Qt.AlignCenter)
+            
+        self._first_button.clicked.connect(lambda: self._stack_widget.setCurrentIndex(1))
+        self._first_button.clicked.connect(lambda: self._open())
+        layout.addWidget(self._combo_box)
+        layout.addWidget(self._title)
+        layout.addWidget(image_label) 
+        layout.addWidget(self._subtitle)
+        layout.addWidget(self._first_button)
+        self._first_page.setLayout(layout)
+
+
+    def _image_page(self):
+        layout = QVBoxLayout()
+        layout.setMenuBar(self.menuBar())
+        self._create_actions()
+        layout.addWidget(self._scroll_area)
+        self._second_page.setLayout(layout)
+
 
     def _image_viewer(self, results):
 
@@ -81,6 +145,7 @@ class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
 
             for words in text:
                 self._extracted_text.append(" ".join(map(str, words)))
+            
 
         self._text_view.setPlainText("\n-------------------------\n".join(self._extracted_text))
         self.statusBar().showMessage(f"Loaded {len(results)} files")
@@ -272,3 +337,6 @@ class ImageViewer(QMainWindow, FileDialog, CallModel, Worker):
         self._images.clear()
         self._extracted_text.clear()
         self._text_view.clear()
+
+
+    

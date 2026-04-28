@@ -6,7 +6,7 @@ import glob
 import xml.etree.ElementTree as ET
 import numpy as np
 
-from config import ANNOT_DIR, IMAGE_DIR, TRAIN_TXT, CLASSES, NUM_CLASSES
+from config import ANNOT_DIR, IMAGE_DIR, TRAIN_FILE_PATH, CLASSES, NUM_CLASSES, INVERT, WIDTH, HEIGHT
 
 class mangaDataset(Dataset):
     def __init__(self, annot_dir,image_dir, split_file, width, height, classes, transforms=None):
@@ -40,6 +40,11 @@ class mangaDataset(Dataset):
         xml_path = os.path.join(self.annot_dir, xml_name)
 
         image = cv2.imread(image_path)
+        
+        # invert image 
+        if INVERT is True:
+            image = cv2.bitwise_not(image)
+
         if image is None:
             raise FileNotFoundError(f"Image not found: {image_path}")
 
@@ -117,9 +122,9 @@ class mangaDataset(Dataset):
 train_ds = mangaDataset(
     annot_dir=ANNOT_DIR,
     image_dir=IMAGE_DIR,
-    split_file=TRAIN_TXT,
-    width=512,
-    height=512,
+    split_file=TRAIN_FILE_PATH,
+    width=WIDTH,
+    height=HEIGHT,
     classes=CLASSES,
     transforms=None
 )   

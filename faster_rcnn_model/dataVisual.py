@@ -70,4 +70,4 @@ def manga_collate_fn(batch):
 
 train_data_loader = DataLoader(train_ds, batch_size=2, shuffle=True, collate_fn=manga_collate_fn, num_workers=0)
 visualizer = VOCvisualizer(class_name=CLASSES)
-visualizer.visualize_batch(train_data_loader, num_images=2)
+visualizer.visualize_batch(train_data_loader, num_images=1)

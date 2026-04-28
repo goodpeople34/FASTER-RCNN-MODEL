@@ -4,7 +4,12 @@ __pycache__/
 .vscode/
 *.jpg
 *.png
+!hina_2.jpg
 faster_rcnn_model/__pycache__/
 window_app/__pycache__/
 window_app/imageCrop.py
+faster_rcnn_model/dummy.py
+faster_rcnn_model/onnx_test.py
 second_model.pth
+model_epoch50.pth
+*.onnx

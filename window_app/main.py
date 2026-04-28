@@ -12,6 +12,10 @@ from PySide6.QtWidgets import (QApplication)
 from imageViewer import ImageViewer
 
 
+def load_stylesheet(app):
+    with open("window_app/style.qss", "r") as f:
+        app.setStyleSheet(f.read())
+
 if __name__ == '__main__':
     arg_parser = ArgumentParser(description="Image Viewer",
                                 formatter_class=RawTextHelpFormatter)
@@ -21,8 +25,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     image_viewer = ImageViewer()
 
-    if args.file and not image_viewer._image_viewer(args.file):
-        sys.exit(-1)
+    load_stylesheet(app)
+    # if args.file and not image_viewer.welcome_page(args.file):
+    #     sys.exit(-1)
 
     image_viewer.show()
     sys.exit(app.exec())
