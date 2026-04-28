@@ -1,6 +1,0 @@
-: 1769780581:0;git pull
-: 1769780689:0;sudo pacman -S pytesseract
-: 1769780701:0;sudo pacman -S python-pytesseract
-: 1769781170:0;export HSA_OVERRIDE_GFX_VERSION=10.3.0\
-
-: 1769782464:0;sudo pacman -S python-nltk
